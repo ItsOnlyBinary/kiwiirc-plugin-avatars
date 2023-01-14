@@ -16,7 +16,7 @@ kiwi.plugin('avatars', (kiwi) => {
         avatarStyles,
     };
 
-    kiwi.replaceModule('components/UserBox', CustomAvatar);
+    kiwi.replaceModule('components/Avatar', CustomAvatar);
 
     kiwi.state.$watch(() => config.setting('avatar_style'), () => {
         kiwi.state.networks.forEach((network) => {
