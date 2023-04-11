@@ -1,5 +1,6 @@
 const path = require('path');
 const VueLoaderPlugin = require('vue-loader/lib/plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 const makeSourceMap = process.argv.indexOf('--srcmap') > -1;
 
 module.exports = {
@@ -24,10 +25,14 @@ module.exports = {
         'avatars-lorelei-neutral': './src/styles/lorelei-neutral.js',
         'avatars-micah': './src/styles/micah.js',
         'avatars-miniavs': './src/styles/miniavs.js',
+        'avatars-notionists': './src/styles/notionists.js',
+        'avatars-notionists-neutral': './src/styles/notionists-neutral.js',
         'avatars-open-peeps': './src/styles/open-peeps.js',
         'avatars-personas': './src/styles/personas.js',
         'avatars-pixel-art': './src/styles/pixel-art.js',
         'avatars-pixel-art-neutral': './src/styles/pixel-art-neutral.js',
+        'avatars-shapes': './src/styles/shapes.js',
+        'avatars-thumbs': './src/styles/thumbs.js',
     },
     output: {
         filename: 'plugin-[name].js',
@@ -40,18 +45,18 @@ module.exports = {
             },
             {
                 test: /\.js$/,
-                use: [{loader: 'exports-loader'}, {loader: 'babel-loader'}],
+                use: [{ loader: 'babel-loader' }],
                 include: [
                     path.join(__dirname, 'src'),
                 ]
             },
             {
                 test: /\.css$/,
-                use: [ 'style-loader', 'css-loader' ]
+                use: ['style-loader', 'css-loader']
             },
             {
                 test: /\.less$/,
-                use: [ 'vue-style-loader', 'css-loader', 'less-loader' ]
+                use: ['vue-style-loader', 'css-loader', 'less-loader']
             }
         ]
     },
@@ -63,9 +68,14 @@ module.exports = {
         maxEntrypointSize: 512000,
         maxAssetSize: 512000
     },
-    devtool: makeSourceMap ? 'source-map' : '',
+    optimization: {
+        minimizer: [new TerserPlugin({
+            extractComments: false,
+        })],
+    },
+    devtool: makeSourceMap ? 'source-map' : undefined,
     devServer: {
-        contentBase: path.join(__dirname, "dist"),
+        static: path.join(__dirname, "dist"),
         compress: true,
         port: 9000,
         headers: {
