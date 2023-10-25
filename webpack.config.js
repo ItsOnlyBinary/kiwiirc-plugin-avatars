@@ -31,6 +31,7 @@ module.exports = {
         'avatars-personas': './src/styles/personas.js',
         'avatars-pixel-art': './src/styles/pixel-art.js',
         'avatars-pixel-art-neutral': './src/styles/pixel-art-neutral.js',
+        'avatars-rings': './src/styles/rings.js',
         'avatars-shapes': './src/styles/shapes.js',
         'avatars-thumbs': './src/styles/thumbs.js',
     },

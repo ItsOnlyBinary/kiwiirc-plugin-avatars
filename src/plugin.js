@@ -1,33 +1,77 @@
+/* global kiwi:true */
+
 import { createAvatar } from '@dicebear/core';
 import * as initials from '@dicebear/initials';
 
 import CustomAvatar from './components/CustomAvatar.vue';
 import * as config from './config.js';
 
-const avatarStyles = {
+// TODO automate this
+const knownStyles = [
+    'adventurer',
+    'adventurer-neutral',
+    'avataaars',
+    'avataaars-neutral',
+    'big-ears',
+    'big-ears-neutral',
+    'big-smile',
+    'bottts',
+    'bottts-neutral',
+    'croodles',
+    'croodles-neutral',
+    'fun-emoji',
+    'icons',
+    'identicon',
+    'lorelei',
+    'lorelei-neutral',
+    'micah',
+    'miniavs',
+    'notionists',
+    'notionists-neutral',
+    'open-peeps',
+    'personas',
+    'pixel-art',
+    'pixel-art-neutral',
+    'rings',
+    'shapes',
+    'thumbs',
+];
+const includedStyles = {
     initials: { module: initials, options: {} },
 };
 
 // eslint-disable-next-line no-undef
-kiwi.plugin('avatars', (kiwi) => {
-    config.setDefaults();
+kiwi.plugin('avatars', () => {
+    const pluginAvatars = (kiwi.pluginAvatars = {
+        loadingAvatars: 0,
+        styles: includedStyles,
+        knownStyles,
+    });
 
-    kiwi['plugin-avatars'] = {
-        avatarStyles,
-    };
+    config.setDefaults(pluginAvatars.knownStyles);
+
+    const startStyle = config.setting('style');
+    if (!pluginAvatars.styles[startStyle]) {
+        loadAvatar(startStyle, config.defaultConfig.style);
+    }
 
     kiwi.replaceModule('components/Avatar', CustomAvatar);
 
-    kiwi.state.$watch(() => config.setting('avatar_style'), () => {
-        kiwi.state.networks.forEach((network) => {
-            Object.values(network.users).forEach((user) => {
-                if (user.avatar?.small.indexOf('data:image/svg+xml;') !== 0) {
-                    return;
-                }
-                updateAvatar(network, user.nick, true);
-            });
-        });
-    });
+    kiwi.state.$watch(
+        () => config.setting('style'),
+        (newStyle, oldStyle) => {
+            if (!pluginAvatars.knownStyles.includes(newStyle)) {
+                config.setting('style', oldStyle);
+                return;
+            }
+            if (pluginAvatars.styles[newStyle]) {
+                updateAllAvatars();
+                return;
+            }
+
+            loadAvatar(newStyle, oldStyle);
+        }
+    );
 
     kiwi.on('irc.join', (event, net) => {
         kiwi.Vue.nextTick(() => {
@@ -56,6 +100,25 @@ kiwi.plugin('avatars', (kiwi) => {
         });
     });
 
+    function loadAvatar(newStyle, oldStyle) {
+        const script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = config.getSetting('path').replace('%style%', newStyle);
+        script.onerror = () => {
+            pluginAvatars.loadingAvatars--;
+            document.body.removeChild(script);
+            config.setting('style', oldStyle);
+        };
+        script.onload = () => {
+            pluginAvatars.loadingAvatars--;
+            if (!pluginAvatars.loadingAvatars) {
+                updateAllAvatars();
+            }
+        };
+        pluginAvatars.loadingAvatars++;
+        document.body.appendChild(script);
+    }
+
     function updateAvatar(net, nick, _force) {
         const force = !!_force;
         const user = kiwi.state.getUser(net.id, nick);
@@ -67,11 +130,11 @@ kiwi.plugin('avatars', (kiwi) => {
             return;
         }
 
-        const userStyleName = config.setting('avatar_style').toLowerCase();
-        const styleName = Object.keys(avatarStyles).includes(userStyleName)
+        const userStyleName = config.setting('style').toLowerCase();
+        const styleName = Object.keys(pluginAvatars.styles).includes(userStyleName)
             ? userStyleName
-            : Object.keys(avatarStyles)[0];
-        const style = avatarStyles[styleName];
+            : Object.keys(pluginAvatars.styles)[0];
+        const style = pluginAvatars.styles[styleName];
 
         const seed = (user.account || user.nick).toLowerCase();
         const options = {
@@ -89,5 +152,16 @@ kiwi.plugin('avatars', (kiwi) => {
             .then((avatar) => {
                 user.avatar.small = avatar;
             });
+    }
+
+    function updateAllAvatars() {
+        kiwi.state.networks.forEach((network) => {
+            Object.values(network.users).forEach((user) => {
+                if (user.avatar?.small.indexOf('data:image/svg+xml;') !== 0) {
+                    return;
+                }
+                updateAvatar(network, user.nick, true);
+            });
+        });
     }
 });

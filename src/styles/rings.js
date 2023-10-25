@@ -1,10 +1,10 @@
-import * as avatarModule from '@dicebear/lorelei-neutral';
+import * as avatarModule from '@dicebear/rings';
 
 /* global kiwi:true */
 
-kiwi.plugin('avatars-lorelei-neutral', (kiwi) => {
+kiwi.plugin('avatars-rings', (kiwi) => {
     Object.assign(kiwi.pluginAvatars.styles, {
-        'lorelei-neutral': {
+        'rings': {
             module: avatarModule,
             options: {},
         },

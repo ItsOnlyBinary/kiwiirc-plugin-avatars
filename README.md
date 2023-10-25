@@ -34,7 +34,7 @@ It is powered by [DiceBear](https://dicebear.com/)
    {"name": "avatars", "url": "/plugins/plugin-avatars.js"}
    ```
 
-   To load other styles also add them as plugins, eg:
+   [Optional] To load other styles also add them as plugins, eg:
     ```json
    {"name": "avatars-micah", "url": "/plugins/plugin-avatars-micah.js"}
    ```
@@ -43,9 +43,14 @@ It is powered by [DiceBear](https://dicebear.com/)
 
 To set the default style add the following json to your `config.json`
 
-```
+```json5
 "plugin-avatars" : {
-    "avatar_style": "initials"
+   // URL path to other avatar styles
+   // if not set this to use auto detection
+   "path": "/static/plugins/plugin-avatars-%style%.js",
+
+   // Default avatar style that will be used
+   "style": "initials"
 },
 ```
 
@@ -55,7 +60,7 @@ There are some size benefits to including your wanted styles into the main plugi
 
 To do so take a look in `./src/plugin.js`.
 
-Import the styles you want the same way `initials` is imported, then add them to the `avatarStyles` object, making sure the key is all lowercase.
+Import the styles you want the same way `initials` is imported, then add them to the `includedStyles` object, making sure the key is all lowercase.
 
 You can also add extra options for each avatar style, see [DiceBear/syles](https://dicebear.com/styles) for the options.
 
