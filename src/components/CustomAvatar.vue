@@ -70,36 +70,3 @@ export default {
 };
 
 </script>
-
-<style>
-
-.kiwi-avatar {
-    width: 100%;
-    height: 100%;
-}
-
-.kiwi-avatar-inner {
-    text-transform: uppercase;
-    cursor: pointer;
-    width: 100%;
-    height: 100%;
-    border: 2px solid;
-    border-radius: 50%;
-    font-weight: 600;
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    user-select: none;
-}
-
-.kiwi-avatar--image > .kiwi-avatar-inner {
-    border: none;
-
-    /* box-shadow: 0 0 3px 1px rgba(0, 0, 0, 0.5); */
-}
-
-</style>

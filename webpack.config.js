@@ -130,8 +130,7 @@ async function GenerateStyles() {
     promises.push(
         fs.promises.writeFile(
             path.join(__dirname, './src/config-styles.json'),
-            '[\n    ' + configStyles.map(JSON.stringify).join(',\n    ') + '\n]',
-            // JSON.stringify(, null, 4),
+            '[\n    ' + configStyles.map(JSON.stringify).join(',\n    ') + '\n]\n',
             'utf-8',
         ),
     );
