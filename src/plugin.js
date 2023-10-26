@@ -14,6 +14,8 @@ const includedStyles = {
 kiwi.plugin('avatars', () => {
     const plugin = kiwi.pluginAvatars = {
         loadingAvatars: 0,
+        isUpdating: false,
+        queuedUpdate: false,
         styles: includedStyles,
         addStyle: (name, module) => {
             const configStyles = config.getSetting('styles');
@@ -147,7 +149,13 @@ kiwi.plugin('avatars', () => {
             });
     }
 
-    function updateAllAvatars() {
+    async function updateAllAvatars() {
+        if (plugin.isUpdating) {
+            plugin.queuedUpdate = true;
+            return;
+        }
+
+        plugin.isUpdating = true;
         kiwi.state.networks.forEach((network) => {
             Object.values(network.users).forEach((user) => {
                 if (user.avatar?.small.indexOf('data:image/svg+xml;') !== 0) {
@@ -156,5 +164,13 @@ kiwi.plugin('avatars', () => {
                 updateAvatar(network, user.nick, true);
             });
         });
+
+        if (!plugin.queuedUpdate) {
+            plugin.isUpdating = false;
+            return;
+        }
+
+        plugin.queuedUpdate = false;
+        updateAllAvatars();
     }
 });
