@@ -12,20 +12,21 @@ const includedStyles = {
 
 // eslint-disable-next-line no-undef
 kiwi.plugin('avatars', () => {
-    const pluginAvatars = kiwi.pluginAvatars = {
+    const plugin = kiwi.pluginAvatars = {
         loadingAvatars: 0,
         styles: includedStyles,
         addStyle: (name, module) => {
             const configStyles = config.getSetting('styles');
             const configStyle = configStyles.find((s) => s.name === name);
             const options = configStyle ? configStyle.options : {};
-            pluginAvatars.styles[name] = {
+            plugin.styles[name] = {
                 module,
                 options,
             };
         },
+        hasStyle: (name) => !!plugin.styles[name],
         canStyle: (name) => {
-            if (pluginAvatars.styles[name]) {
+            if (plugin.hasStyle(name)) {
                 return true;
             }
 
@@ -34,11 +35,15 @@ kiwi.plugin('avatars', () => {
         },
     };
 
-    config.setDefaults(pluginAvatars);
+    config.setDefaults();
 
     const startStyle = config.setting('style');
-    if (!pluginAvatars.styles[startStyle]) {
-        loadAvatar(startStyle, config.defaultConfig.style);
+    if (!plugin.hasStyle(startStyle)) {
+        if (config.getSetting('autoLoad') && plugin.canStyle(startStyle)) {
+            loadAvatar(startStyle, config.defaultConfig.style);
+        } else {
+            config.setting('style', config.defaultConfig.style);
+        }
     }
 
     kiwi.replaceModule('components/Avatar', CustomAvatar);
@@ -46,11 +51,13 @@ kiwi.plugin('avatars', () => {
     kiwi.state.$watch(
         () => config.setting('style'),
         (newStyle, oldStyle) => {
-            if (!pluginAvatars.canStyle(newStyle)) {
+            const notAllowed = !config.getSetting('autoLoad') && !plugin.hasStyle(newStyle);
+            if (notAllowed || !plugin.canStyle(newStyle)) {
                 config.setting('style', oldStyle);
                 return;
             }
-            if (pluginAvatars.styles[newStyle]) {
+
+            if (plugin.hasStyle(newStyle)) {
                 updateAllAvatars();
                 return;
             }
@@ -91,17 +98,17 @@ kiwi.plugin('avatars', () => {
         script.type = 'text/javascript';
         script.src = config.getSetting('path').replace('%style%', newStyle);
         script.onerror = () => {
-            pluginAvatars.loadingAvatars--;
+            plugin.loadingAvatars--;
             document.body.removeChild(script);
             config.setting('style', oldStyle);
         };
         script.onload = () => {
-            pluginAvatars.loadingAvatars--;
-            if (!pluginAvatars.loadingAvatars) {
+            plugin.loadingAvatars--;
+            if (!plugin.loadingAvatars) {
                 updateAllAvatars();
             }
         };
-        pluginAvatars.loadingAvatars++;
+        plugin.loadingAvatars++;
         document.body.appendChild(script);
     }
 
@@ -117,10 +124,10 @@ kiwi.plugin('avatars', () => {
         }
 
         const userStyleName = config.setting('style').toLowerCase();
-        const styleName = Object.keys(pluginAvatars.styles).includes(userStyleName)
+        const styleName = Object.keys(plugin.styles).includes(userStyleName)
             ? userStyleName
-            : Object.keys(pluginAvatars.styles)[0];
-        const style = pluginAvatars.styles[styleName];
+            : Object.keys(plugin.styles)[0];
+        const style = plugin.styles[styleName];
 
         const seed = (user.account || user.nick).toLowerCase();
         const options = {

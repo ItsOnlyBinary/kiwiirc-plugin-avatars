@@ -6,11 +6,11 @@ It is powered by [DiceBear](https://dicebear.com/)
 
 ---
 
-#### Dependencies
+### Dependencies
 * node (https://nodejs.org/)
 * yarn (https://yarnpkg.com/)
 
-#### Building and installing
+### Building and installing
 
 1. Build the plugin
 
@@ -39,7 +39,7 @@ It is powered by [DiceBear](https://dicebear.com/)
    {"name": "avatars-micah", "url": "/plugins/plugin-avatars-micah.js"}
    ```
 
-#### Configuration
+### Configuration
 
 To set the default style add the following json to your `config.json`
 
@@ -50,11 +50,16 @@ To set the default style add the following json to your `config.json`
    "path": "/static/plugins/plugin-avatars-%style%.js",
 
    // Default avatar style that will be used
-   "style": "initials"
+   "style": "initials",
+
+   // Allow styles to be auto loaded if they exist
+   "autoLoad": true
 },
 ```
 
-#### Advanced
+It is possible to specify which styles can be autoloaded, or tweak the style options by setting `"styles"` array with the contents from [config-styles.json](https://github.com/ItsOnlyBinary/kiwiirc-plugin-avatars/blob/master/src/config-styles.json) and editing the contents.
+
+### Advanced
 
 There are some size benefits to including your wanted styles into the main plugin.
 
