@@ -6,49 +6,35 @@ import * as initials from '@dicebear/initials';
 import CustomAvatar from './components/CustomAvatar.vue';
 import * as config from './config.js';
 
-// TODO automate this
-const knownStyles = [
-    'adventurer',
-    'adventurer-neutral',
-    'avataaars',
-    'avataaars-neutral',
-    'big-ears',
-    'big-ears-neutral',
-    'big-smile',
-    'bottts',
-    'bottts-neutral',
-    'croodles',
-    'croodles-neutral',
-    'fun-emoji',
-    'icons',
-    'identicon',
-    'lorelei',
-    'lorelei-neutral',
-    'micah',
-    'miniavs',
-    'notionists',
-    'notionists-neutral',
-    'open-peeps',
-    'personas',
-    'pixel-art',
-    'pixel-art-neutral',
-    'rings',
-    'shapes',
-    'thumbs',
-];
 const includedStyles = {
     initials: { module: initials, options: {} },
 };
 
 // eslint-disable-next-line no-undef
 kiwi.plugin('avatars', () => {
-    const pluginAvatars = (kiwi.pluginAvatars = {
+    const pluginAvatars = kiwi.pluginAvatars = {
         loadingAvatars: 0,
         styles: includedStyles,
-        knownStyles,
-    });
+        addStyle: (name, module) => {
+            const configStyles = config.getSetting('styles');
+            const configStyle = configStyles.find((s) => s.name === name);
+            const options = configStyle ? configStyle.options : {};
+            pluginAvatars.styles[name] = {
+                module,
+                options,
+            };
+        },
+        canStyle: (name) => {
+            if (pluginAvatars.styles[name]) {
+                return true;
+            }
 
-    config.setDefaults(pluginAvatars.knownStyles);
+            const configStyles = config.getSetting('styles');
+            return configStyles.some((s) => s.name === name);
+        },
+    };
+
+    config.setDefaults(pluginAvatars);
 
     const startStyle = config.setting('style');
     if (!pluginAvatars.styles[startStyle]) {
@@ -60,7 +46,7 @@ kiwi.plugin('avatars', () => {
     kiwi.state.$watch(
         () => config.setting('style'),
         (newStyle, oldStyle) => {
-            if (!pluginAvatars.knownStyles.includes(newStyle)) {
+            if (!pluginAvatars.canStyle(newStyle)) {
                 config.setting('style', oldStyle);
                 return;
             }

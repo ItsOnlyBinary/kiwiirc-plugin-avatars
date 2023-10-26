@@ -1,4 +1,5 @@
 /* global kiwi:true */
+const configStyles = require('./config-styles.json');
 
 const basePath = getBasePath();
 const configBase = 'plugin-avatars';
@@ -6,9 +7,10 @@ const configBase = 'plugin-avatars';
 export const defaultConfig = {
     path: basePath + 'plugin-avatars-%style%.js',
     style: 'initials',
+    styles: configStyles,
 };
 
-export function setDefaults(knownStyles) {
+export function setDefaults(pluginAvatars) {
     const oldStyle = getSetting('avatar_style');
     if (oldStyle) {
         // eslint-disable-next-line quotes, no-console
@@ -18,7 +20,7 @@ export function setDefaults(knownStyles) {
 
     kiwi.setConfigDefaults(configBase, defaultConfig);
 
-    if (!knownStyles.includes(setting('style'))) {
+    if (!pluginAvatars.canStyle(setting('style'))) {
         setting('style', defaultConfig.style);
     }
 }
