@@ -5,7 +5,7 @@ const basePath = getBasePath();
 const configBase = 'plugin-avatars';
 
 export const defaultConfig = {
-    path: basePath + 'plugin-avatars-%style%.js',
+    path: basePath + 'plugin-avatars/%style%.js',
     style: 'initials',
     styles: configStyles,
 };

@@ -16,6 +16,7 @@ module.exports = (async (env, argv) => {
         entry: entryPoints,
         output: {
             filename: 'plugin-[name].js',
+            clean: true,
         },
         module: {
             rules: [
@@ -109,7 +110,10 @@ async function GenerateStyles() {
         );
 
         // Add an entry point for the style
-        entry['avatars-' + style] = styleFile;
+        entry['avatars-' + style] = {
+            import: styleFile,
+            filename: 'plugin-avatars/' + style + '.js',
+        };
 
         // Add the style to json if it does not exist
         const hasStyle = configStyles.some((s) => s.name === style);
