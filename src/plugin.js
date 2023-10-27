@@ -10,12 +10,10 @@ const includedStyles = {
     initials: { module: initials, options: {} },
 };
 
-// eslint-disable-next-line no-undef
 kiwi.plugin('avatars', () => {
     const plugin = kiwi.pluginAvatars = {
         loadingAvatars: 0,
-        isUpdating: false,
-        queuedUpdate: false,
+        updateTimeouts: Object.create(null),
         styles: includedStyles,
         addStyle: (name, module) => {
             const configStyles = config.getSetting('styles');
@@ -149,28 +147,38 @@ kiwi.plugin('avatars', () => {
             });
     }
 
-    async function updateAllAvatars() {
-        if (plugin.isUpdating) {
-            plugin.queuedUpdate = true;
-            return;
-        }
-
-        plugin.isUpdating = true;
-        kiwi.state.networks.forEach((network) => {
-            Object.values(network.users).forEach((user) => {
-                if (user.avatar?.small.indexOf('data:image/svg+xml;') !== 0) {
-                    return;
-                }
-                updateAvatar(network, user.nick, true);
-            });
+    function updateAllAvatars() {
+        Object.keys(plugin.updateTimeouts).forEach((networkid) => {
+            clearTimeout(plugin.updateTimeouts[networkid]);
+            delete plugin.updateTimeouts[networkid];
         });
 
-        if (!plugin.queuedUpdate) {
-            plugin.isUpdating = false;
-            return;
-        }
+        kiwi.state.networks.forEach((network) => {
+            const currentUser = network.currentUser();
+            const users = Object.values(network.users)
+                .filter((u) => u !== currentUser && u.avatar?.small.indexOf('data:image/svg+xml;') === 0);
 
-        plugin.queuedUpdate = false;
-        updateAllAvatars();
+            // make sure our users is in the first batch
+            users.unshift(currentUser);
+            plugin.updateTimeouts[network.id] = setTimeout(
+                () => processUpdateAvatars(network, users),
+                0
+            );
+        });
+    }
+
+    function processUpdateAvatars(network, users) {
+        const someUsers = users.splice(0, 50);
+
+        someUsers.forEach((user) => updateAvatar(network, user.nick, true));
+
+        if (users.length) {
+            plugin.updateTimeouts[network.id] = setTimeout(
+                () => processUpdateAvatars(network, users),
+                0
+            );
+        } else {
+            delete plugin.updateTimeouts[network.id];
+        }
     }
 });
