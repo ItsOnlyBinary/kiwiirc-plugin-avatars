@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const VueLoaderPlugin = require('vue-loader/lib/plugin');
+const { VueLoaderPlugin } = require('vue-loader');
 const TerserPlugin = require('terser-webpack-plugin');
 const { rimrafSync } = require('rimraf');
 
@@ -17,6 +17,9 @@ module.exports = (async (env, argv) => {
         output: {
             filename: 'plugin-[name].js',
             clean: true,
+        },
+        externals: {
+            'vue': 'kiwi.Vue',
         },
         module: {
             rules: [

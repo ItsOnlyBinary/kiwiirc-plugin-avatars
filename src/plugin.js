@@ -1,5 +1,6 @@
 /* global kiwi:true */
 
+import { watch } from 'vue';
 import { createAvatar } from '@dicebear/core';
 import * as initials from '@dicebear/initials';
 
@@ -48,7 +49,7 @@ kiwi.plugin('avatars', () => {
 
     kiwi.replaceModule('components/Avatar', CustomAvatar);
 
-    kiwi.state.$watch(
+    watch(
         () => config.setting('style'),
         (newStyle, oldStyle) => {
             const notAllowed = !config.getSetting('autoLoad') && !plugin.hasStyle(newStyle);
