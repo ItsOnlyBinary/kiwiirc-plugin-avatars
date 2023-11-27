@@ -144,6 +144,7 @@ kiwi.plugin('avatars', () => {
             .toDataUri()
             .then((avatar) => {
                 user.avatar.small = avatar;
+                kiwi.emit('user.avatar', { user, network: net });
             });
     }
 
