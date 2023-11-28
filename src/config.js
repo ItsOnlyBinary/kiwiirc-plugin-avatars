@@ -8,6 +8,7 @@ export const defaultConfig = {
     path: basePath + 'plugin-avatars/%style%.js',
     style: 'initials',
     styles: configStyles,
+    stylesOptions: {},
     autoLoad: true,
 };
 

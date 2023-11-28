@@ -34,9 +34,10 @@ It is powered by [DiceBear](https://dicebear.com/)
    {"name": "avatars", "url": "/plugins/plugin-avatars.js"}
    ```
 
-   [Optional] To load other styles also add them as plugins, eg:
+   [Optional] While it is possible to manually specify additional styles as plugins, an autoload feature is available to simplify this process.
+   If you prefer to specify styles and disable `autoLoad`, include the following configuration in your config.json file:
     ```json
-   {"name": "avatars-micah", "url": "/plugins/plugin-avatars-micah.js"}
+   {"name": "avatars-micah", "url": "/plugins/plugin-avatars/micah.js"}
    ```
 
 ### Configuration
@@ -47,10 +48,15 @@ To set the default style add the following json to your `config.json`
 "plugin-avatars" : {
    // URL path to other avatar styles
    // if not set this to use auto detection
-   "path": "/static/plugins/plugin-avatars-%style%.js",
+   "path": "/static/plugins/plugin-avatars/%style%.js",
 
    // Default avatar style that will be used
    "style": "initials",
+
+   // Allows specifying options modifiers for the different styles
+   "stylesOptions": {
+      "micah": { "translateY": 5 }
+   }
 
    // Allow styles to be auto loaded if they exist
    "autoLoad": true
@@ -59,15 +65,17 @@ To set the default style add the following json to your `config.json`
 
 It is possible to specify which styles can be autoloaded, or tweak the style options by setting `"styles"` array with the contents from [config-styles.json](https://github.com/ItsOnlyBinary/kiwiirc-plugin-avatars/blob/master/src/config-styles.json) and editing the contents.
 
+For the different options that can be specified in `stylesOptions` see here: [DiceBear/styles](https://dicebear.com/styles)
+
 ### Advanced
 
-There are some size benefits to including your wanted styles into the main plugin.
+There are some small size benefits to including your wanted styles into the main plugin.
 
 To do so take a look in `./src/plugin.js`.
 
 Import the styles you want the same way `initials` is imported, then add them to the `includedStyles` object, making sure the key is all lowercase.
 
-You can also add extra options for each avatar style, see [DiceBear/syles](https://dicebear.com/styles) for the options.
+You can also add extra options for each avatar style, see [DiceBear/styles](https://dicebear.com/styles) for the options.
 
 ## License
 

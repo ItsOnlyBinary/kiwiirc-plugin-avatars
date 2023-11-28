@@ -19,6 +19,12 @@ kiwi.plugin('avatars', () => {
             const configStyles = config.getSetting('styles');
             const configStyle = configStyles.find((s) => s.name === name);
             const options = configStyle ? configStyle.options : {};
+
+            const configOptions = config.getSetting('stylesOptions.' + name);
+            if (configOptions) {
+                Object.assign(options, configOptions);
+            }
+
             plugin.styles[name] = {
                 module,
                 options,
