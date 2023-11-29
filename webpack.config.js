@@ -1,85 +1,116 @@
-const path = require('path');
-const VueLoaderPlugin = require('vue-loader/lib/plugin');
-const TerserPlugin = require('terser-webpack-plugin');
-const makeSourceMap = process.argv.indexOf('--srcmap') > -1;
+const fs = require('fs');
+const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+const { rimrafSync } = require('rimraf');
 
-module.exports = {
-    mode: 'production',
-    entry: {
-        'avatars': './src/plugin.js',
-        'avatars-adventurer': './src/styles/adventurer.js',
-        'avatars-adventurer-neutral': './src/styles/adventurer-neutral.js',
-        'avatars-avataaars': './src/styles/avataaars.js',
-        'avatars-avataaars-neutral': './src/styles/avataaars-neutral.js',
-        'avatars-big-ears': './src/styles/big-ears.js',
-        'avatars-big-ears-neutral': './src/styles/big-ears-neutral.js',
-        'avatars-big-smile': './src/styles/big-smile.js',
-        'avatars-bottts': './src/styles/bottts.js',
-        'avatars-bottts-neutral': './src/styles/bottts-neutral.js',
-        'avatars-croodles': './src/styles/croodles.js',
-        'avatars-croodles-neutral': './src/styles/croodles-neutral.js',
-        'avatars-fun-emoji': './src/styles/fun-emoji.js',
-        'avatars-icons': './src/styles/icons.js',
-        'avatars-identicon': './src/styles/identicon.js',
-        'avatars-lorelei': './src/styles/lorelei.js',
-        'avatars-lorelei-neutral': './src/styles/lorelei-neutral.js',
-        'avatars-micah': './src/styles/micah.js',
-        'avatars-miniavs': './src/styles/miniavs.js',
-        'avatars-notionists': './src/styles/notionists.js',
-        'avatars-notionists-neutral': './src/styles/notionists-neutral.js',
-        'avatars-open-peeps': './src/styles/open-peeps.js',
-        'avatars-personas': './src/styles/personas.js',
-        'avatars-pixel-art': './src/styles/pixel-art.js',
-        'avatars-pixel-art-neutral': './src/styles/pixel-art-neutral.js',
-        'avatars-shapes': './src/styles/shapes.js',
-        'avatars-thumbs': './src/styles/thumbs.js',
-    },
-    output: {
-        filename: 'plugin-[name].js',
-    },
-    module: {
-        rules: [
-            {
-                test: /\.vue$/,
-                loader: 'vue-loader',
-            },
-            {
-                test: /\.js$/,
-                use: [{ loader: 'babel-loader' }],
-                include: [
-                    path.join(__dirname, 'src'),
-                ]
-            },
-            {
-                test: /\.css$/,
-                use: ['style-loader', 'css-loader']
-            },
-            {
-                test: /\.less$/,
-                use: ['vue-style-loader', 'css-loader', 'less-loader']
-            }
-        ]
-    },
-    plugins: [
-        new VueLoaderPlugin(),
-    ],
-    performance: {
-        hints: false,
-        maxEntrypointSize: 512000,
-        maxAssetSize: 512000
-    },
-    optimization: {
-        minimizer: [new TerserPlugin({
-            extractComments: false,
-        })],
-    },
-    devtool: makeSourceMap ? 'source-map' : undefined,
-    devServer: {
-        static: path.join(__dirname, "dist"),
-        compress: true,
-        port: 9000,
-        headers: {
-            "Access-Control-Allow-Origin": "*"
-        }
+const dicebearCollection = import('@dicebear/collection');
+
+const utils = require('./build/utils');
+
+const devConfig = require('./build/configs/dev');
+const prodConfig = require('./build/configs/prod');
+
+module.exports = async (env, argv) => {
+    const isDev = env.WEBPACK_SERVE;
+    let config = {
+        mode: isDev ? 'development' : 'production',
+    };
+
+    if (argv.mode) {
+        config.mode = argv.mode;
     }
+
+    if (argv.stats) {
+        config.plugins = [
+            new BundleAnalyzerPlugin(),
+        ];
+    }
+
+    config.entry = await GenerateStyles();
+
+    if (isDev) {
+        config = devConfig(env, argv, config);
+    } else {
+        config = prodConfig(env, argv, config);
+    }
+
+    return config;
 };
+
+async function GenerateStyles() {
+    const styles = Object.keys(await dicebearCollection)
+        .map((s) => s.replace(/[A-Z]/g, (n) => '-' + n.toLowerCase()))
+        .filter((s) => s !== 'initials');
+
+    const entry = {
+        'avatars': './src/plugin.js',
+    };
+
+    // Read and parse styles json file
+    const configStylesText = fs.readFileSync(utils.pathResolve('./src/config-styles.json'), 'utf-8');
+    let configStyles = JSON.parse(configStylesText);
+
+    // Add the built in style to json if it does not exist
+    const hasInitials = configStyles.some((style) => style.name === 'initials');
+    if (!hasInitials) {
+        configStyles.push({ name: 'initials', options: {} });
+    }
+
+    // Cleanup styles directory
+    const stylesPath = utils.pathResolve('./src/styles/');
+    const fileTest = /[/\\]styles[/\\][\w-]+\.js$/;
+    rimrafSync(stylesPath, {
+        filter: (file) => fileTest.test(file),
+    });
+
+    // Read template file
+    const templateContent = fs.readFileSync(utils.pathResolve('build/style-template.js'), 'utf-8');
+
+    const promises = [];
+    styles.forEach((style) => {
+        const styleFile = `./src/styles/${style}.js`;
+        const styleContent = templateContent.replace(/%stylename%/g, style);
+
+        // Write the styles javascript file
+        promises.push(
+            fs.promises.writeFile(
+                utils.pathResolve(styleFile),
+                styleContent,
+                'utf-8',
+            ),
+        );
+
+        // Add an entry point for the style
+        entry['avatars-' + style] = {
+            import: styleFile,
+            filename: 'plugin-avatars/' + style + '.js',
+        };
+
+        // Add the style to json if it does not exist
+        const hasStyle = configStyles.some((s) => s.name === style);
+        if (!hasStyle) {
+            configStyles.push({ name: style, options: {} });
+        }
+    });
+
+    // Add the built in style so it is not cleaned from config
+    styles.push('initials');
+
+    // Clean styles json file
+    configStyles = configStyles
+        .filter((s) => styles.includes(s.name))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+    // Write styles json file
+    promises.push(
+        fs.promises.writeFile(
+            utils.pathResolve('./src/config-styles.json'),
+            '[\n    ' + configStyles.map(JSON.stringify).join(',\n    ') + '\n]\n',
+            'utf-8',
+        ),
+    );
+
+    // Wait for all above file writes to complete
+    await Promise.all(promises);
+
+    return entry;
+}

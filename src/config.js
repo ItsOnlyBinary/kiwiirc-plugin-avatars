@@ -1,31 +1,33 @@
 /* global kiwi:true */
-/* global _:true */
+const configStyles = require('./config-styles.json');
 
-// eslint-disable-next-line no-unused-vars
 const basePath = getBasePath();
 const configBase = 'plugin-avatars';
 
-const defaultConfig = {
-    avatar_style: 'initials',
+export const defaultConfig = {
+    path: basePath + 'plugin-avatars/%style%.js',
+    style: 'initials',
+    styles: configStyles,
+    stylesOptions: {},
+    autoLoad: true,
 };
 
 export function setDefaults() {
-    let walkConfig = (obj, _target) => {
-        _.each(obj, (val, key) => {
-            let target = [..._target, key];
-            let targetName = target.join('.');
-            if (typeof val === 'object' && !_.isArray(val)) {
-                walkConfig(val, target);
-            } else if (typeof getSetting(targetName) === 'undefined') {
-                setSetting(targetName, val);
-            }
-        });
-    };
-    walkConfig(defaultConfig, []);
+    const oldStyle = getSetting('avatar_style');
+    if (oldStyle) {
+        // eslint-disable-next-line quotes, no-console
+        console.warn(
+            '[Deprecated] config option \'plugin-avatars.avatar_style\' changed to '
+            + '\'plugin-avatars.style\'. Please update your config.json'
+        );
+        setSetting('style', oldStyle);
+    }
+
+    kiwi.setConfigDefaults(configBase, defaultConfig);
 }
 
-export function setting(name) {
-    return kiwi.state.setting([configBase, name].join('.'));
+export function setting(name, value) {
+    return kiwi.state.setting([configBase, name].join('.'), value);
 }
 
 export function getSetting(name) {
