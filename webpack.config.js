@@ -1,70 +1,40 @@
 const fs = require('fs');
-const path = require('path');
-const VueLoaderPlugin = require('vue-loader/lib/plugin');
-const TerserPlugin = require('terser-webpack-plugin');
+const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 const { rimrafSync } = require('rimraf');
 
 const dicebearCollection = import('@dicebear/collection');
 
-const makeSourceMap = process.argv.indexOf('--srcmap') > -1;
+const utils = require('./build/utils');
 
-module.exports = (async (env, argv) => {
-    const entryPoints = await GenerateStyles();
+const devConfig = require('./build/configs/dev');
+const prodConfig = require('./build/configs/prod');
 
-    return {
-        mode: 'production',
-        entry: entryPoints,
-        output: {
-            filename: 'plugin-[name].js',
-            clean: true,
-        },
-        module: {
-            rules: [
-                {
-                    test: /\.vue$/,
-                    loader: 'vue-loader',
-                },
-                {
-                    test: /\.js$/,
-                    use: [{ loader: 'babel-loader' }],
-                    include: [
-                        path.join(__dirname, 'src'),
-                    ]
-                },
-                {
-                    test: /\.css$/,
-                    use: ['style-loader', 'css-loader']
-                },
-                {
-                    test: /\.less$/,
-                    use: ['vue-style-loader', 'css-loader', 'less-loader']
-                }
-            ]
-        },
-        plugins: [
-            new VueLoaderPlugin(),
-        ],
-        performance: {
-            hints: false,
-            maxEntrypointSize: 512000,
-            maxAssetSize: 512000
-        },
-        optimization: {
-            minimizer: [new TerserPlugin({
-                extractComments: false,
-            })],
-        },
-        devtool: makeSourceMap ? 'source-map' : undefined,
-        devServer: {
-            static: path.join(__dirname, "dist"),
-            compress: true,
-            port: 9000,
-            headers: {
-                "Access-Control-Allow-Origin": "*"
-            }
-        }
+module.exports = async (env, argv) => {
+    const isDev = env.WEBPACK_SERVE;
+    let config = {
+        mode: isDev ? 'development' : 'production',
     };
-})();
+
+    if (argv.mode) {
+        config.mode = argv.mode;
+    }
+
+    if (argv.stats) {
+        config.plugins = [
+            new BundleAnalyzerPlugin(),
+        ];
+    }
+
+    config.entry = await GenerateStyles();
+
+    if (isDev) {
+        config = devConfig(env, argv, config);
+    } else {
+        config = prodConfig(env, argv, config);
+    }
+
+    return config;
+};
 
 async function GenerateStyles() {
     const styles = Object.keys(await dicebearCollection)
@@ -76,24 +46,24 @@ async function GenerateStyles() {
     };
 
     // Read and parse styles json file
-    const configStylesText = fs.readFileSync(path.join(__dirname, './src/config-styles.json'), 'utf-8');
+    const configStylesText = fs.readFileSync(utils.pathResolve('./src/config-styles.json'), 'utf-8');
     let configStyles = JSON.parse(configStylesText);
 
     // Add the built in style to json if it does not exist
     const hasInitials = configStyles.some((style) => style.name === 'initials');
-    if (!hasInitials){
+    if (!hasInitials) {
         configStyles.push({ name: 'initials', options: {} });
     }
 
     // Cleanup styles directory
-    const stylesPath = path.resolve(__dirname, './src/styles/');
-    const fileTest = /[/\\]styles[/\\][\w-]+\.js$/
+    const stylesPath = utils.pathResolve('./src/styles/');
+    const fileTest = /[/\\]styles[/\\][\w-]+\.js$/;
     rimrafSync(stylesPath, {
         filter: (file) => fileTest.test(file),
     });
 
     // Read template file
-    const templateContent = fs.readFileSync(path.join(__dirname, './build/style-template.js'), 'utf-8');
+    const templateContent = fs.readFileSync(utils.pathResolve('build/style-template.js'), 'utf-8');
 
     const promises = [];
     styles.forEach((style) => {
@@ -103,7 +73,7 @@ async function GenerateStyles() {
         // Write the styles javascript file
         promises.push(
             fs.promises.writeFile(
-                path.join(__dirname, styleFile),
+                utils.pathResolve(styleFile),
                 styleContent,
                 'utf-8',
             ),
@@ -117,7 +87,7 @@ async function GenerateStyles() {
 
         // Add the style to json if it does not exist
         const hasStyle = configStyles.some((s) => s.name === style);
-        if (!hasStyle){
+        if (!hasStyle) {
             configStyles.push({ name: style, options: {} });
         }
     });
@@ -128,12 +98,12 @@ async function GenerateStyles() {
     // Clean styles json file
     configStyles = configStyles
         .filter((s) => styles.includes(s.name))
-        .sort((a, b) => a.name.localeCompare(b.name));;
+        .sort((a, b) => a.name.localeCompare(b.name));
 
     // Write styles json file
     promises.push(
         fs.promises.writeFile(
-            path.join(__dirname, './src/config-styles.json'),
+            utils.pathResolve('./src/config-styles.json'),
             '[\n    ' + configStyles.map(JSON.stringify).join(',\n    ') + '\n]\n',
             'utf-8',
         ),

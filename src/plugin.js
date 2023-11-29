@@ -1,6 +1,8 @@
 /* global kiwi:true */
 
 import { createAvatar } from '@dicebear/core';
+
+// eslint-disable-next-line import/no-extraneous-dependencies
 import * as initials from '@dicebear/initials';
 
 import CustomAvatar from './components/CustomAvatar.vue';

@@ -16,7 +16,10 @@ export function setDefaults() {
     const oldStyle = getSetting('avatar_style');
     if (oldStyle) {
         // eslint-disable-next-line quotes, no-console
-        console.warn(`[Deprecated] config option 'plugin-avatars.avatar_style' changed to 'plugin-avatars.style'. Please update your config.json`);
+        console.warn(
+            '[Deprecated] config option \'plugin-avatars.avatar_style\' changed to '
+            + '\'plugin-avatars.style\'. Please update your config.json'
+        );
         setSetting('style', oldStyle);
     }
 
