@@ -23,7 +23,7 @@ module.exports = (env, argv, config) => {
         context: process.cwd(),
 
         entry: {
-            app: './src/plugin.js',
+            avatars: './src/plugin.js',
         },
 
         devtool: sourceMap,
