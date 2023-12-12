@@ -15,8 +15,6 @@ const includedStyles = {
 kiwi.plugin('avatars', () => {
     config.setDefaults();
 
-    kiwi.emit('plugin-avatars.started');
-
     const Logger = kiwi.require('libs/Logger');
     const log = Logger.namespace('plugin-avatars');
 
@@ -171,8 +169,6 @@ kiwi.plugin('avatars', () => {
                     small: newAvatar.replace(/^data:image\/svg\+xml;/, dataURL),
                     large: '',
                 });
-
-                kiwi.emit('plugin-avatars.created', { network, user, force });
             })
             .catch((err) => {
                 log.error('Failed to generate avatar:', err.message, `[nick="${user.nick}"]`);
