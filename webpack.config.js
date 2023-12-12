@@ -42,7 +42,7 @@ async function GenerateStyles() {
         .filter((s) => s !== 'initials');
 
     const entry = {
-        'avatars': './src/plugin.js',
+        avatars: './src/plugin.js',
     };
 
     // Read and parse styles json file
