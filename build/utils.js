@@ -2,7 +2,7 @@ const os = require('os');
 const path = require('path');
 const { execSync } = require('child_process');
 
-module.exports.pathResolve = (...args) => path.posix.join(process.cwd(), ...args);
+module.exports.pathResolve = (...args) => path.join(process.cwd(), ...args);
 
 module.exports.getCommitHash = () => {
     let commitHash = 'unknown';
