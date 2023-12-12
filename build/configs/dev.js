@@ -16,6 +16,7 @@ module.exports = (env, argv, config) => {
             devMiddleware: {
                 publicPath: 'auto',
             },
+            hot: false,
             open: false,
             host: '127.0.0.1',
             port: portNumber,
