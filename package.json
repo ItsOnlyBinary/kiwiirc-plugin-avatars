@@ -11,7 +11,7 @@
         "stats": "node build/commands/build.js --stats",
         "lint": "npm-run-all lint:*",
         "lint:js": "eslint --ext .js,.vue ./",
-        "lint:style": "stylelint \"./src/**/*.{vue,html,css,less,scss,sass}\""
+        "lint:style": "stylelint --allow-empty-input \"./src/**/*.{vue,html,css,less,scss,sass}\""
     },
     "dependencies": {
         "@dicebear/collection": "^7.0.1",
