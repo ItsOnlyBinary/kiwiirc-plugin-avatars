@@ -216,7 +216,7 @@ kiwi.plugin('avatars', () => {
     function processUpdateAvatars(network, users) {
         const someUsers = users.splice(0, 50);
 
-        someUsers.forEach((user) => updateAvatar(network, user.nick, true));
+        someUsers.forEach((user) => updateAvatar(user, true));
 
         if (users.length) {
             plugin.updateTimeouts[network.id] = setTimeout(() => processUpdateAvatars(network, users), 0);
