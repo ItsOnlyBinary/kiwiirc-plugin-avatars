@@ -5,7 +5,6 @@ import { createAvatar } from '@dicebear/core';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import * as initials from '@dicebear/initials';
 
-import CustomAvatar from './components/CustomAvatar.vue';
 import * as config from './config.js';
 
 const includedStyles = {
@@ -58,8 +57,6 @@ kiwi.plugin('avatars', () => {
         }
     }
 
-    kiwi.replaceModule('components/Avatar', CustomAvatar);
-
     kiwi.state.$watch(
         () => config.setting('style'),
         (newStyle, oldStyle) => {
@@ -78,31 +75,47 @@ kiwi.plugin('avatars', () => {
         }
     );
 
-    kiwi.on('irc.join', (event, net) => {
+    kiwi.on('irc.wholist', (event, network) => {
         kiwi.Vue.nextTick(() => {
-            updateAvatar(net, event.nick);
-        });
-    });
-
-    kiwi.on('irc.wholist', (event, net) => {
-        const nicks = event.users.map((user) => user.nick);
-        kiwi.Vue.nextTick(() => {
-            nicks.forEach((nick) => {
-                updateAvatar(net, nick);
+            event.users.forEach((whoUser) => {
+                const user = kiwi.state.getUser(network.id, whoUser.nick);
+                if (user && user.avatarCache) {
+                    // Only process users that have already used their avatar
+                    // Other users will be handled by the user.avatar.create event
+                    updateAvatar(user);
+                }
             });
         });
     });
 
-    kiwi.on('irc.nick', (event, net) => {
+    kiwi.on('irc.nick', (event, network) => {
         kiwi.Vue.nextTick(() => {
-            updateAvatar(net, event.new_nick, true);
+            const user = kiwi.state.getUser(network.id, event.nick);
+            if (user) {
+                updateAvatar(user, true);
+            }
         });
     });
 
-    kiwi.on('irc.account', (event, net) => {
+    kiwi.on('irc.account', (event, network) => {
         kiwi.Vue.nextTick(() => {
-            updateAvatar(net, event.nick, true);
+            const user = kiwi.state.getUser(network.id, event.nick);
+            if (user) {
+                updateAvatar(user, true);
+            }
         });
+    });
+
+    kiwi.on('user.avatar.create', (event) => {
+        updateAvatar(event.user);
+    });
+
+    kiwi.on('user.avatar.failed', (event) => {
+        if (event.failed.startsWith(dataURL)) {
+            // Somehow we failed, don't get into a loop
+            return;
+        }
+        updateAvatar(event.user);
     });
 
     function loadAvatar(newStyle, oldStyle) {
@@ -125,12 +138,7 @@ kiwi.plugin('avatars', () => {
         document.body.appendChild(script);
     }
 
-    function updateAvatar(network, nick, force = false) {
-        const user = kiwi.state.getUser(network.id, nick);
-        if (!user) {
-            return;
-        }
-
+    function updateAvatar(user, force = false) {
         const avatar = user.avatar;
         if (!force && (avatar.small || avatar.large)) {
             // Avatar already set
@@ -196,7 +204,7 @@ kiwi.plugin('avatars', () => {
         kiwi.state.networks.forEach((network) => {
             const currentUser = network.currentUser();
             const users = Object.values(network.users).filter(
-                (u) => u !== currentUser && shouldSetAvatar(u.avatar, true)
+                (u) => u !== currentUser && u.avatarCache && shouldSetAvatar(u.avatar, true)
             );
 
             // make sure our users is in the first batch
@@ -208,7 +216,7 @@ kiwi.plugin('avatars', () => {
     function processUpdateAvatars(network, users) {
         const someUsers = users.splice(0, 50);
 
-        someUsers.forEach((user) => updateAvatar(network, user.nick, true));
+        someUsers.forEach((user) => updateAvatar(user, true));
 
         if (users.length) {
             plugin.updateTimeouts[network.id] = setTimeout(() => processUpdateAvatars(network, users), 0);
