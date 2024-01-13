@@ -200,7 +200,9 @@ kiwi.plugin('avatars', () => {
             );
 
             // make sure our users is in the first batch
-            users.unshift(currentUser);
+            if (currentUser) {
+                users.unshift(currentUser);
+            }
             plugin.updateTimeouts[network.id] = setTimeout(() => processUpdateAvatars(network, users), 0);
         });
     }
