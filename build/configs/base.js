@@ -46,8 +46,8 @@ module.exports = (env, argv, config) => {
         },
 
         performance: {
-            maxEntrypointSize: 500 * utils.KiB,
-            maxAssetSize: 500 * utils.KiB,
+            maxEntrypointSize: 512 * utils.KiB, // 0.5MiB
+            maxAssetSize: 512 * utils.KiB, // 0.5MiB
         },
 
         plugins: [
@@ -80,6 +80,9 @@ module.exports = (env, argv, config) => {
 
                                     // Object can be used for svg files
                                     object: 'data',
+                                },
+                                compilerOptions: {
+                                    comments: false,
                                 },
                             },
                         },

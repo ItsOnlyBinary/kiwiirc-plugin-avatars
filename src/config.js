@@ -1,9 +1,8 @@
 /* global kiwi:true */
 const configStyles = require('./config-styles.json');
 
-const basePath = getBasePath();
-const configBase = 'plugin-avatars';
-
+export const basePath = getBasePath();
+export const configBase = 'plugin-avatars';
 export const defaultConfig = {
     path: basePath + 'plugin-avatars/%style%.js',
     style: 'initials',
@@ -26,8 +25,8 @@ export function setDefaults() {
     kiwi.setConfigDefaults(configBase, defaultConfig);
 }
 
-export function setting(name, value) {
-    return kiwi.state.setting([configBase, name].join('.'), value);
+export function setting(name, newVal) {
+    return kiwi.state.setting([configBase, name].join('.'), newVal);
 }
 
 export function getSetting(name) {
