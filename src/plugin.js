@@ -167,20 +167,15 @@ kiwi.plugin('avatars', () => {
             Object.assign(options, style.options);
         }
 
-        createAvatar(style.module, options)
-            .toDataUri()
-            .then((newAvatar) => {
-                if (!shouldSetAvatar(user.avatar, force)) {
-                    return;
-                }
-                Object.assign(user.avatar, {
-                    small: newAvatar.replace(/^data:image\/svg\+xml;/, dataURL),
-                    large: '',
-                });
-            })
-            .catch((err) => {
-                log.error('Failed to generate avatar:', err.message, `[nick="${user.nick}"]`);
-            });
+        const newAvatar = createAvatar(style.module, options).toDataUri();
+
+        if (!shouldSetAvatar(user.avatar, force)) {
+            return;
+        }
+        Object.assign(user.avatar, {
+            small: newAvatar.replace(/^data:image\/svg\+xml;/, dataURL),
+            large: '',
+        });
     }
 
     function shouldSetAvatar(avatar, force) {
